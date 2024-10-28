@@ -1,68 +1,38 @@
 // create web server
-var express = require('express');
-var app = express();
-var fs = require("fs");
+// Import the Express module to create a web server
+const express = require('express');
+const app = express();
 
-// create the server
-var server = app.listen(8081, function() {
-    var host = server.address().address;
-    var port = server.address().port;
-    console.log("app listening at http://%s:%s", host, port);
+// Middleware to parse JSON requests
+// Allows Express to interpret the request body as JSON
+app.use(express.json());
+
+// Array to store comments, simulating a temporary "database"
+const comments = [];
+
+// Route to retrieve all comments
+// GET /comments - Returns all comments as JSON
+app.get('/comments', (req, res) => {
+  res.json(comments);
 });
 
-// GET request to the comments page
-app.get('/comments', function(req, res) {
-    fs.readFile(__dirname + "/" + "comments.json", 'utf8', function(err, data) {
-        console.log(data);
-        res.end(data);
-    });
+// Route to add a new comment
+// POST /comments - Receives a comment in the request body and adds it to the list
+app.post('/comments', (req, res) => {
+  const comment = req.body;  // Captures the comment sent in the request body
+  comments.push(comment);    // Adds the comment to the temporary "database"
+  res.status(201).send();    // Responds with status 201 (Created) indicating success
 });
 
-// POST request to the comments page
-var bodyParser = require('body-parser');
-var urlencodedParser = bodyParser.urlencoded({ extended: false });
-app.post('/comments', urlencodedParser, function(req, res) {
-    var comment = req.body.comment;
-    fs.readFile(__dirname + "/" + "comments.json", 'utf8', function(err, data) {
-        data = JSON.parse(data);
-        data.comments.push(comment);
-        console.log(data);
-        fs.writeFile(__dirname + "/" + "comments.json", JSON.stringify(data), function(err) {
-            if (err) {
-                console.log(err);
-            }
-        });
-    });
-    res.end("comment added");
+// Start the server on port 3000
+// Listens for requests and logs a confirmation message to the console
+app.listen(3000, () => {
+  console.log('Server is running on http://localhost:3000');
 });
 
-// PUT request to the comments page
-app.put('/comments', urlencodedParser, function(req, res) {
-    var comment = req.body.comment;
-    var index = req.body.index;
-    fs.readFile(__dirname + "/" + "comments.json", 'utf8', function(err, data) {
-        data = JSON.parse(data);
-        data.comments[index] = comment;
-        console.log(data);
-        fs.writeFile(__dirname + "/" + "comments.json", JSON.stringify(data), function(err) {
-            if (err) {
-                console.log(err);
-            }
-        });
-    });
-    res.end("comment updated");
-});
-
-// DELETE request to the comments page
-app.delete('/comments', urlencodedParser, function(req, res) {
-    var index = req.body.index;
-    fs.readFile(__dirname + "/" + "comments.json", 'utf8', function(err, data) {
-        data = JSON.parse(data);
-        data.comments.splice(index, 1);
-        console.log(data);
-        fs.writeFile(__dirname + "/" + "comments.json", JSON.stringify(data), function(err) {
-            if (err) {
-                console.log(err);
-            }
-        });
-    });
+// Usage example:
+// Run the server with `node comments.js` and test with the following requests:
+// To add a comment: 
+// curl -X POST -H "Content-Type: application/json" -d '{"username": "Alice", "content": "I am Alice"}' http://localhost:3000/comments
+// To get all comments: 
+// curl http://localhost:3000/comments
