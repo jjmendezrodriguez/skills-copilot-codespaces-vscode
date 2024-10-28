@@ -1,33 +1,37 @@
 // create web server
-// use express
-const express = require('express');
-const app = express();
-// create a port to listen to
-const PORT = 4001;
+// 1. Load http module
+var http = require('http');
+var fs = require('fs');
+var url = require('url');
 
-// use body-parser
-const bodyParser = require('body-parser');
-app.use(bodyParser.json());
+// 2. Create Server
+http.createServer(function (req, res) {
+  // Parse the request containing file name
+  var pathname = url.parse(req.url).pathname;
 
-// create a commentsByPostId object to store comments
-const commentsByPostId = {};
+  // Print the name of the file for which request is made.
+  console.log("Request for " + pathname + " received.");
 
-// create a get request to get comments of a post
-app.get('/posts/:id/comments', (req, res) => {
-    res.send(commentsByPostId[req.params.id] || []);
-});
+  // Read the requested file content from file system
+  fs.readFile(pathname.substr(1), function (err, data) {
+    if (err) {
+      console.log(err);
+      // HTTP Status: 404 : NOT FOUND
+      // Content Type: text/plain
+      res.writeHead(404, {'Content-Type': 'text/html'});
+    } else {
+      //Page found
+      // HTTP Status: 200 : OK
+      // Content Type: text/plain
+      res.writeHead(200, {'Content-Type': 'text/html'});
 
-// create a post request to add a comment to a post
-app.post('/posts/:id/comments', (req, res) => {
-    const postId = req.params.id;
-    const comments = commentsByPostId[postId] || [];
-    comments.push(req.body);
-    commentsByPostId[postId] = comments;
+      // Write the content of the file to response body
+      res.write(data.toString());
+    }
+    // Send the response body
+    res.end();
+  });
+}).listen(8081);
 
-    res.status(201).send(comments);
-});
-
-// listen to the port
-app.listen(PORT, () => {
-    console.log(`Comments service is running on port ${PORT}`);
-});
+// Console will print the message
+console.log('Server running at http://127.0.0.1:8081/');
